@@ -1,9 +1,10 @@
 
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -14,6 +15,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { 
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import ThemeToggle from "@/components/ThemeToggle";
 import { 
@@ -28,7 +34,8 @@ import {
   Menu, 
   Database, 
   Search, 
-  Code
+  Code,
+  Bot
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -40,6 +47,9 @@ const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
   const [open, setOpen] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const getUserInitial = (email: string) => {
     return email ? email[0].toUpperCase() : "U";
@@ -65,10 +75,50 @@ const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
     }
   };
 
+  // Get the current page title
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === "/dashboard") return "Dashboard";
+    if (path === "/dashboard/scans") return "Penetration Tests";
+    if (path === "/dashboard/reports") return "Reports";
+    if (path === "/dashboard/threats") return "Threat Analysis";
+    if (path === "/dashboard/automated-scan") return "Automated Scanning";
+    if (path === "/dashboard/manual-testing") return "Manual Testing";
+    if (path === "/dashboard/social-engineering") return "Social Engineering";
+    if (path === "/dashboard/compliance") return "Compliance Audits";
+    if (path === "/dashboard/settings") return "Settings";
+    if (path === "/dashboard/assistant") return "AI Assistant";
+    return "Dashboard";
+  };
+
+  // Define navigation items for reuse
+  const mainNavItems = [
+    { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
+    { title: "Penetration Tests", path: "/dashboard/scans", icon: Target },
+    { title: "Reports", path: "/dashboard/reports", icon: FileText },
+    { title: "Threat Analysis", path: "/dashboard/threats", icon: AlertCircle },
+  ];
+
+  const toolsNavItems = [
+    { title: "Automated Scanning", path: "/dashboard/automated-scan", icon: Search },
+    { title: "Manual Testing", path: "/dashboard/manual-testing", icon: Code },
+    { title: "Social Engineering", path: "/dashboard/social-engineering", icon: Users },
+    { title: "Compliance Audits", path: "/dashboard/compliance", icon: Database },
+    { title: "AI Assistant", path: "/dashboard/assistant", icon: Bot },
+  ];
+
+  const settingsNavItems = [
+    { title: "Settings", path: "/dashboard/settings", icon: Settings },
+    { title: "Sign Out", action: handleSignOut, icon: LogOut },
+  ];
+
+  // Check if a navigation item is active
+  const isActive = (path: string) => location.pathname === path;
+
   return (
     <SidebarProvider defaultOpen={open} open={open} onOpenChange={setOpen}>
       <div className="flex h-screen bg-background">
-        {/* Sidebar for desktop */}
+        {/* Desktop Sidebar */}
         <div className="hidden md:block">
           <Sidebar collapsible="icon">
             <SidebarContent>
@@ -90,41 +140,16 @@ const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard" className="flex items-center">
-                          <BarChart3 className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Dashboard</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard/scans" className="flex items-center">
-                          <Target className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Penetration Tests</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard/reports" className="flex items-center">
-                          <FileText className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Reports</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard/threats" className="flex items-center">
-                          <AlertCircle className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Threat Analysis</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    {mainNavItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive(item.path)}>
+                          <Link to={item.path} className="flex items-center">
+                            <item.icon className="h-5 w-5 mr-2" />
+                            <span className={!open ? "hidden" : "block"}>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -135,41 +160,16 @@ const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard/automated-scan" className="flex items-center">
-                          <Search className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Automated Scanning</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard/manual-testing" className="flex items-center">
-                          <Code className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Manual Testing</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard/social-engineering" className="flex items-center">
-                          <Users className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Social Engineering</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard/compliance" className="flex items-center">
-                          <Database className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Compliance Audits</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    {toolsNavItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive(item.path)}>
+                          <Link to={item.path} className="flex items-center">
+                            <item.icon className="h-5 w-5 mr-2" />
+                            <span className={!open ? "hidden" : "block"}>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -180,23 +180,25 @@ const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <Link to="/dashboard/settings" className="flex items-center">
-                          <Settings className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Settings</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                        <button onClick={handleSignOut} className="flex items-center w-full text-left">
-                          <LogOut className="h-5 w-5 mr-2" />
-                          <span className={!open ? "hidden" : "block"}>Sign Out</span>
-                        </button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    {settingsNavItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        {item.action ? (
+                          <SidebarMenuButton asChild>
+                            <button onClick={item.action} className="flex items-center w-full text-left">
+                              <item.icon className="h-5 w-5 mr-2" />
+                              <span className={!open ? "hidden" : "block"}>{item.title}</span>
+                            </button>
+                          </SidebarMenuButton>
+                        ) : (
+                          <SidebarMenuButton asChild isActive={isActive(item.path)}>
+                            <Link to={item.path} className="flex items-center">
+                              <item.icon className="h-5 w-5 mr-2" />
+                              <span className={!open ? "hidden" : "block"}>{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        )}
+                      </SidebarMenuItem>
+                    ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -210,10 +212,90 @@ const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
           <header className="bg-background border-b p-4 flex justify-between items-center">
             <div className="flex items-center">
               {/* Mobile menu button */}
-              <Button variant="ghost" size="icon" className="md:hidden mr-2">
-                <Menu className="h-5 w-5" />
-              </Button>
-              <h1 className="text-xl font-bold">Dashboard</h1>
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden mr-2">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-[85%] sm:w-[380px]">
+                  <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground">
+                    <div className="p-4 flex items-center border-b border-sidebar-border">
+                      <div className="w-8 h-8 bg-emerald-500 rounded-md flex items-center justify-center mr-2">
+                        <Shield className="text-black w-5 h-5" />
+                      </div>
+                      <span className="font-bold text-lg">Hacker Mind</span>
+                    </div>
+                    
+                    <div className="flex-1 overflow-auto p-2">
+                      <div className="mb-6">
+                        <h3 className="text-xs uppercase font-medium mb-2 text-sidebar-foreground/70 px-3">Main</h3>
+                        <div className="space-y-1">
+                          {mainNavItems.map((item) => (
+                            <Button
+                              key={item.title}
+                              variant={isActive(item.path) ? "secondary" : "ghost"}
+                              className="w-full justify-start"
+                              onClick={() => {
+                                navigate(item.path);
+                                setMobileMenuOpen(false);
+                              }}
+                            >
+                              <item.icon className="h-5 w-5 mr-2" />
+                              {item.title}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="mb-6">
+                        <h3 className="text-xs uppercase font-medium mb-2 text-sidebar-foreground/70 px-3">Tools</h3>
+                        <div className="space-y-1">
+                          {toolsNavItems.map((item) => (
+                            <Button
+                              key={item.title}
+                              variant={isActive(item.path) ? "secondary" : "ghost"}
+                              className="w-full justify-start"
+                              onClick={() => {
+                                navigate(item.path);
+                                setMobileMenuOpen(false);
+                              }}
+                            >
+                              <item.icon className="h-5 w-5 mr-2" />
+                              {item.title}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-xs uppercase font-medium mb-2 text-sidebar-foreground/70 px-3">Settings</h3>
+                        <div className="space-y-1">
+                          {settingsNavItems.map((item) => (
+                            <Button
+                              key={item.title}
+                              variant={item.path && isActive(item.path) ? "secondary" : "ghost"}
+                              className="w-full justify-start"
+                              onClick={() => {
+                                if (item.action) {
+                                  item.action();
+                                } else if (item.path) {
+                                  navigate(item.path);
+                                }
+                                setMobileMenuOpen(false);
+                              }}
+                            >
+                              <item.icon className="h-5 w-5 mr-2" />
+                              {item.title}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+              <h1 className="text-xl font-bold">{getPageTitle()}</h1>
             </div>
             
             <div className="flex items-center gap-4">
