@@ -69,7 +69,7 @@ const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
     <div className="flex h-screen bg-background">
       {/* Sidebar for desktop */}
       <div className="hidden md:block">
-        <Sidebar defaultCollapsed={collapsed} collapsible onCollapsedChange={setCollapsed}>
+        <Sidebar defaultCollapsed={collapsed} collapsible="icon" onCollapsedChange={setCollapsed}>
           <SidebarContent>
             <div className={`p-4 flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
               <div className={`flex items-center gap-2 ${collapsed ? "hidden" : "flex"}`}>
