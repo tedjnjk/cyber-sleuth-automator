@@ -5,15 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, Send, ChevronRight, Info, AlertCircle, User, Loader2, Download } from "lucide-react";
+import { Bot, Send, ChevronRight, Info, AlertCircle, User, Loader2, Download, Cog } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Message {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  timestamp: Date;
-}
+import { Message, sendMessageToAI } from "@/services/ai-service";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const Assistant = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -26,6 +29,7 @@ const Assistant = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKey, setApiKey] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -37,7 +41,7 @@ const Assistant = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
 
     // Add user message
@@ -52,33 +56,27 @@ const Assistant = () => {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response after a delay
-    setTimeout(() => {
-      let response = "";
-      
-      // Simple pattern matching for demo purposes
-      if (input.toLowerCase().includes("sql injection")) {
-        response = "SQL injection is a common attack vector that exploits vulnerable SQL statements. To test for SQL injections, try using the Manual Testing tool with payloads like `' OR 1=1 --` in form fields. Would you like me to guide you through setting up a SQL injection test?";
-      } else if (input.toLowerCase().includes("scan") || input.toLowerCase().includes("test")) {
-        response = "I can help you set up an automated security scan. Would you like to test a web application, network, or API endpoints? Navigate to the Automated Scanning section to configure and run your scan.";
-      } else if (input.toLowerCase().includes("report")) {
-        response = "You can generate detailed security reports after completing a scan. These reports include vulnerability details, risk levels, and remediation recommendations. Go to the Reports section to view existing reports or generate new ones.";
-      } else if (input.toLowerCase().includes("compliance") || input.toLowerCase().includes("gdpr")) {
-        response = "For compliance audits like GDPR, ISO 27001, or NIST, you can use our Compliance & Security Audits tool. It will evaluate your systems against these standards and provide detailed compliance reports with gap analysis.";
-      } else {
-        response = "I can assist with penetration testing, vulnerability scanning, report generation, and security compliance. Please let me know what specific security testing task you'd like help with.";
-      }
+    try {
+      // Get the current conversation history
+      const conversationHistory = [...messages, userMessage];
 
-      const assistantMessage: Message = {
-        id: Date.now().toString(),
-        content: response,
-        role: "assistant",
-        timestamp: new Date(),
-      };
+      // Send the message to the AI service
+      const assistantMessage = await sendMessageToAI(
+        conversationHistory,
+        apiKey || undefined
+      );
       
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get a response from the AI assistant.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -110,9 +108,6 @@ const Assistant = () => {
             className="text-xs text-left justify-start h-auto py-1.5 px-3"
             onClick={() => {
               setInput(suggestion);
-              // Optional: automatically send the suggestion
-              // setInput(suggestion);
-              // setTimeout(() => handleSendMessage(), 100);
             }}
           >
             <ChevronRight className="h-3 w-3 mr-1 flex-shrink-0" />
@@ -123,12 +118,62 @@ const Assistant = () => {
     );
   };
 
+  const exportConversation = () => {
+    const conversationText = messages
+      .map((msg) => `${msg.role === 'user' ? 'You' : 'AI'}: ${msg.content}`)
+      .join('\n\n');
+    
+    const blob = new Blob([conversationText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `security-assistant-conversation-${new Date().toISOString().substring(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <DashboardPage>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">AI Security Assistant</h1>
-          <p className="text-muted-foreground">Get help with security testing and vulnerability management</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">AI Security Assistant</h1>
+            <p className="text-muted-foreground">Get help with security testing and vulnerability management</p>
+          </div>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Cog className="h-4 w-4 mr-2" />
+                API Settings
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>AI Assistant Settings</DialogTitle>
+                <DialogDescription>
+                  Enter your OpenAI API key to enable the AI assistant.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">OpenAI API Key</Label>
+                  <Input
+                    id="apiKey"
+                    placeholder="sk-..."
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    type="password"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Your API key is stored locally and never sent to our servers.
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -176,7 +221,7 @@ const Assistant = () => {
                               : "bg-primary text-primary-foreground"
                           }`}
                         >
-                          <div className="text-sm">{message.content}</div>
+                          <div className="text-sm whitespace-pre-wrap">{message.content}</div>
                           <div
                             className={`text-xs mt-1 text-right ${
                               message.role === "assistant"
@@ -285,7 +330,7 @@ const Assistant = () => {
                 </div>
                 
                 <div className="pt-2 mt-auto">
-                  <Button variant="outline" className="w-full" size="sm">
+                  <Button variant="outline" className="w-full" size="sm" onClick={exportConversation}>
                     <Download className="mr-2 h-4 w-4" />
                     Export Conversation
                   </Button>

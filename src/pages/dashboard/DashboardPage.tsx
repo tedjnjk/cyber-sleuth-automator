@@ -38,7 +38,22 @@ const DashboardPage = ({ children }: DashboardPageProps) => {
       }
     };
 
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+        } else if (session?.user) {
+          setUser(session.user);
+        }
+      }
+    );
+
     getUser();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [toast]);
 
   if (loading) {

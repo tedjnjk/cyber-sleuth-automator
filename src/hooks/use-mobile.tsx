@@ -23,7 +23,7 @@ export function useIsMobile() {
   }, [])
 
   // If isMobile is undefined (first render before useEffect), 
-  // return a sensible default based on current window width or false
+  // use a server-safe approach to determine default state
   if (isMobile === undefined) {
     return typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
   }
