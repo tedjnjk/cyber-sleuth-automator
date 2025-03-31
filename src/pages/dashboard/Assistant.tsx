@@ -24,6 +24,7 @@ const Assistant = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // Use the provided API key
   const [apiKey, setApiKey] = useState("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");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();

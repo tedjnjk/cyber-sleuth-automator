@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile"; // Fixed import name
 
 interface DashboardLayoutProps {
   user: User;
@@ -14,7 +14,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile(); // Fixed function name
   const [open, setOpen] = useState(!isMobile);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
