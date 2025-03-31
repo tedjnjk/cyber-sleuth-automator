@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardPage from "./DashboardPage";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,19 +11,52 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Mail, Send, FileBadge, Upload, List, ArrowRight, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { createPhishingCampaign, getPhishingCampaigns, createInitialResults, PhishingCampaign } from "@/services/social-engineering-service";
 
 const SocialEngineering = () => {
   const [emails, setEmails] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const [templateId, setTemplateId] = useState("password-reset");
+  const [name, setName] = useState("");
+  const [senderName, setSenderName] = useState("");
+  const [senderEmail, setSenderEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [campaigns, setCampaigns] = useState<PhishingCampaign[]>([]);
   const { toast } = useToast();
 
-  const handleCreateCampaign = () => {
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const data = await getPhishingCampaigns();
+        setCampaigns(data);
+      } catch (error) {
+        console.error("Error loading campaigns:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load campaigns",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadCampaigns();
+  }, [toast]);
+
+  const handleCreateCampaign = async () => {
     if (!emails) {
       toast({
         title: "Error",
         description: "Please enter at least one email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!name) {
+      toast({
+        title: "Error",
+        description: "Please enter a campaign name",
         variant: "destructive",
       });
       return;
@@ -47,23 +80,76 @@ const SocialEngineering = () => {
       return;
     }
 
+    if (!senderName || !senderEmail) {
+      toast({
+        title: "Error",
+        description: "Please enter sender name and email",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
-    // Simulate campaign creation
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Process emails (comma or newline separated)
+      const emailList = emails
+        .split(/[\s,]+/)
+        .map(email => email.trim())
+        .filter(email => email);
+      
+      // Create the campaign
+      const campaign = {
+        name,
+        template_id: templateId,
+        target_emails: emailList,
+        subject,
+        content,
+        sender_name: senderName,
+        sender_email: senderEmail,
+        status: 'draft'
+      };
+      
+      const createdCampaign = await createPhishingCampaign(campaign);
+      
+      // Create initial result entries for each email
+      if (createdCampaign?.id) {
+        await createInitialResults(createdCampaign.id, emailList);
+      }
+      
+      // Update the campaigns list
+      setCampaigns(prev => [createdCampaign, ...prev]);
+      
+      // Reset form
+      setName("");
+      setEmails("");
+      setSubject("");
+      setContent("");
+      setSenderName("");
+      setSenderEmail("");
+      setTemplateId("password-reset");
+      
       toast({
         title: "Campaign Created",
         description: "Phishing simulation campaign has been created successfully",
       });
-    }, 2000);
+    } catch (error) {
+      console.error("Error creating campaign:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create campaign",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <DashboardPage>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Social Engineering Simulator</h1>
+          <h1 className="text-2xl font-bold text-foreground">Social Engineering Simulator</h1>
           <p className="text-muted-foreground">Create and manage social engineering test campaigns</p>
         </div>
         
@@ -77,12 +163,22 @@ const SocialEngineering = () => {
           <TabsContent value="phishing" className="mt-6 space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Create Phishing Campaign</CardTitle>
+                <CardTitle className="text-foreground">Create Phishing Campaign</CardTitle>
                 <CardDescription>
                   Design a phishing simulation to test security awareness
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="campaign-name">Campaign Name</Label>
+                  <Input 
+                    id="campaign-name" 
+                    placeholder="Enter campaign name" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="target-emails">Target Email Addresses</Label>
                   <Textarea 
@@ -98,7 +194,10 @@ const SocialEngineering = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="template">Email Template</Label>
-                  <Select defaultValue="password-reset">
+                  <Select 
+                    value={templateId} 
+                    onValueChange={setTemplateId}
+                  >
                     <SelectTrigger id="template">
                       <SelectValue placeholder="Select a template" />
                     </SelectTrigger>
@@ -138,11 +237,21 @@ const SocialEngineering = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="sender-name">Sender Name</Label>
-                    <Input id="sender-name" placeholder="IT Department" />
+                    <Input 
+                      id="sender-name" 
+                      placeholder="IT Department" 
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sender-email">Sender Email</Label>
-                    <Input id="sender-email" placeholder="support@company-it-dept.com" />
+                    <Input 
+                      id="sender-email" 
+                      placeholder="support@company-it-dept.com" 
+                      value={senderEmail}
+                      onChange={(e) => setSenderEmail(e.target.value)}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -170,7 +279,7 @@ const SocialEngineering = () => {
           <TabsContent value="awareness" className="mt-6 space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Security Awareness Training</CardTitle>
+                <CardTitle className="text-foreground">Security Awareness Training</CardTitle>
                 <CardDescription>
                   Manage security training programs for your organization
                 </CardDescription>
@@ -184,7 +293,7 @@ const SocialEngineering = () => {
                   
                   <Card className="relative overflow-hidden">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Email Security Basics</CardTitle>
+                      <CardTitle className="text-base text-foreground">Email Security Basics</CardTitle>
                     </CardHeader>
                     <CardContent className="pb-2">
                       <p className="text-sm text-muted-foreground mb-2">15 minute course on identifying suspicious emails</p>
@@ -203,7 +312,7 @@ const SocialEngineering = () => {
                   
                   <Card className="relative overflow-hidden">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Password Security</CardTitle>
+                      <CardTitle className="text-base text-foreground">Password Security</CardTitle>
                     </CardHeader>
                     <CardContent className="pb-2">
                       <p className="text-sm text-muted-foreground mb-2">10 minute course on creating secure passwords</p>
@@ -227,7 +336,7 @@ const SocialEngineering = () => {
           <TabsContent value="reports" className="mt-6 space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Campaign Reports</CardTitle>
+                <CardTitle className="text-foreground">Campaign Reports</CardTitle>
                 <CardDescription>
                   View results and metrics from your social engineering campaigns
                 </CardDescription>
@@ -236,22 +345,22 @@ const SocialEngineering = () => {
                 <div className="rounded-md border">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Opened Emails</p>
-                      <p className="text-2xl font-bold">76%</p>
+                      <p className="text-sm font-medium text-foreground">Opened Emails</p>
+                      <p className="text-2xl font-bold text-foreground">76%</p>
                       <p className="text-xs text-muted-foreground">182/240 recipients</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Clicked Links</p>
+                      <p className="text-sm font-medium text-foreground">Clicked Links</p>
                       <p className="text-2xl font-bold text-amber-500">43%</p>
                       <p className="text-xs text-muted-foreground">104/240 recipients</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Entered Credentials</p>
+                      <p className="text-sm font-medium text-foreground">Entered Credentials</p>
                       <p className="text-2xl font-bold text-red-500">22%</p>
                       <p className="text-xs text-muted-foreground">53/240 recipients</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">Reported Phishing</p>
+                      <p className="text-sm font-medium text-foreground">Reported Phishing</p>
                       <p className="text-2xl font-bold text-green-500">31%</p>
                       <p className="text-xs text-muted-foreground">75/240 recipients</p>
                     </div>
@@ -259,58 +368,34 @@ const SocialEngineering = () => {
                 </div>
                 
                 <div className="rounded-md border p-4">
-                  <h3 className="text-lg font-medium mb-4">Recent Campaigns</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-4">Recent Campaigns</h3>
                   <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b">
-                      <div>
-                        <p className="font-medium">Password Reset Campaign</p>
-                        <p className="text-sm text-muted-foreground">May 15, 2023 · 240 recipients</p>
+                    {campaigns.length > 0 ? (
+                      campaigns.slice(0, 3).map((campaign) => (
+                        <div key={campaign.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b">
+                          <div>
+                            <p className="font-medium text-foreground">{campaign.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(campaign.created_at!).toLocaleDateString()} · {campaign.target_emails.length} recipients
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm">
+                              <List className="h-4 w-4 mr-2" />
+                              Details
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <FileBadge className="h-4 w-4 mr-2" />
+                              Report
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center p-4">
+                        <p className="text-muted-foreground">No campaigns yet. Create your first phishing campaign.</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <List className="h-4 w-4 mr-2" />
-                          Details
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <FileBadge className="h-4 w-4 mr-2" />
-                          Report
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b">
-                      <div>
-                        <p className="font-medium">IT Support Request</p>
-                        <p className="text-sm text-muted-foreground">April 28, 2023 · 183 recipients</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <List className="h-4 w-4 mr-2" />
-                          Details
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <FileBadge className="h-4 w-4 mr-2" />
-                          Report
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <p className="font-medium">Invoice Payment</p>
-                        <p className="text-sm text-muted-foreground">April 10, 2023 · 156 recipients</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <List className="h-4 w-4 mr-2" />
-                          Details
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <FileBadge className="h-4 w-4 mr-2" />
-                          Report
-                        </Button>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

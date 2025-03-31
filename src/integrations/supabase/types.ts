@@ -9,7 +9,182 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ai_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      phishing_campaigns: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          name: string
+          sender_email: string
+          sender_name: string
+          status: string
+          subject: string
+          target_emails: string[]
+          template_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          name: string
+          sender_email: string
+          sender_name: string
+          status?: string
+          subject: string
+          target_emails: string[]
+          template_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sender_email?: string
+          sender_name?: string
+          status?: string
+          subject?: string
+          target_emails?: string[]
+          template_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      phishing_results: {
+        Row: {
+          campaign_id: string
+          clicked: boolean | null
+          created_at: string
+          email: string
+          id: string
+          opened: boolean | null
+          reported: boolean | null
+          submitted_data: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          clicked?: boolean | null
+          created_at?: string
+          email: string
+          id?: string
+          opened?: boolean | null
+          reported?: boolean | null
+          submitted_data?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          clicked?: boolean | null
+          created_at?: string
+          email?: string
+          id?: string
+          opened?: boolean | null
+          reported?: boolean | null
+          submitted_data?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phishing_results_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "phishing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scans: {
+        Row: {
+          created_at: string
+          findings: Json | null
+          id: string
+          scan_type: string
+          status: string
+          target_url: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          scan_type: string
+          status?: string
+          target_url: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          scan_type?: string
+          status?: string
+          target_url?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

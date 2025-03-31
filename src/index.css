@@ -93,6 +93,14 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
+  }
+  
+  p {
+    @apply text-foreground;
+  }
 }
 
 @layer components {
@@ -107,4 +115,79 @@
   .feature-description {
     @apply text-zinc-400 dark:text-zinc-400;
   }
+  
+  .card-title {
+    @apply text-foreground;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
+  
+  .dashboard-container {
+    @apply p-4 md:p-6;
+  }
+  
+  .section-title {
+    @apply text-xl font-bold mb-4 text-foreground;
+  }
+  
+  .clickable {
+    @apply cursor-pointer hover:opacity-90 transition-opacity;
+  }
+}
+
+/* Responsive classes */
+@layer utilities {
+  .responsive-p {
+    @apply p-2 sm:p-4 md:p-6;
+  }
+  
+  .responsive-m {
+    @apply m-2 sm:m-4 md:m-6;
+  }
+  
+  .responsive-gap {
+    @apply gap-2 sm:gap-4 md:gap-6;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base md:text-lg;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Button improvements for all devices */
+button {
+  @apply select-none active:translate-y-[1px] transition-transform;
+}
+
+.btn, 
+.button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  @apply select-none active:translate-y-[1px] transition-transform;
+}
+
+@media (max-width: 640px) {
+  .hide-on-mobile {
+    @apply hidden;
+  }
+  
+  .mobile-full-width {
+    @apply w-full;
+  }
+  
+  .mobile-stack {
+    @apply flex flex-col;
+  }
+}
+
+/* Improved focus states for accessibility */
+:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
 }

@@ -1,49 +1,53 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type Message = {
+export interface Message {
   id: string;
-  content: string;
   role: "user" | "assistant";
+  content: string;
   timestamp: Date;
-};
+}
 
-export async function sendMessageToAI(
+export const sendMessageToAI = async (
   messages: Message[],
   apiKey?: string
-): Promise<Message> {
+): Promise<Message> => {
   try {
-    // Format messages for OpenAI API
-    const formattedMessages = messages.map(msg => ({
+    // Format messages for the API
+    const formattedMessages = messages.map((msg) => ({
       role: msg.role,
-      content: msg.content
+      content: msg.content,
     }));
 
-    // If we have a Supabase connection, use the edge function
-    const { data, error } = await supabase.functions.invoke('ai-chat', {
-      body: {
+    // Call the Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke("ai-chat", {
+      body: { 
         messages: formattedMessages,
-        apiKey: apiKey // Pass the API key if provided directly
-      }
+        apiKey
+      },
     });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Error calling AI service:", error);
+      throw new Error(error.message || "Failed to get a response");
+    }
 
-    return {
-      id: Date.now().toString(),
-      content: data.response || "I'm sorry, I couldn't generate a response.",
-      role: "assistant",
-      timestamp: new Date()
-    };
+    // Convert timestamp string to Date object
+    if (data.timestamp && typeof data.timestamp === 'string') {
+      data.timestamp = new Date(data.timestamp);
+    } else {
+      data.timestamp = new Date();
+    }
+
+    return data as Message;
   } catch (error) {
-    console.error("Error in AI service:", error);
-    
-    // Fallback for demo or when API is unavailable
+    console.error("Error in sendMessageToAI:", error);
+    // Return a fallback message in case of error
     return {
       id: Date.now().toString(),
-      content: "I'm sorry, there was an error connecting to the AI service. Please check your API key and network connection.",
       role: "assistant",
-      timestamp: new Date()
+      content: "I'm sorry, I encountered an error processing your request. Please check your API key or try again later.",
+      timestamp: new Date(),
     };
   }
-}
+};
