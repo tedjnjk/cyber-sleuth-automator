@@ -162,7 +162,9 @@ const Assistant = () => {
                   <Label htmlFor="apiKey">OpenAI API Key</Label>
                   <Input
                     id="apiKey"
-                    placeholder="sk-..."
+                    
+                    
+                    placeholder="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"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     type="password"
