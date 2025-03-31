@@ -24,10 +24,24 @@ const Assistant = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  // Use the provided API key
-  const [apiKey, setApiKey] = useState("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");
+  const [apiKey, setApiKey] = useState<string>("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");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Check for API key in localStorage on component mount
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem("openai_api_key");
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+  }, []);
+
+  // Save API key to localStorage when it changes
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem("openai_api_key", apiKey);
+    }
+  }, [apiKey]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,10 +107,10 @@ const Assistant = () => {
       // Get the current conversation history
       const conversationHistory = [...messages, userMessage];
 
-      // Send the message to the AI service
+      // Send the message to the AI service with API key
       const assistantMessage = await sendMessageToAI(
         conversationHistory,
-        apiKey || undefined
+        apiKey
       );
       
       // Save AI response to Supabase
@@ -113,9 +127,17 @@ const Assistant = () => {
       console.error("Error sending message:", error);
       toast({
         title: "Error",
-        description: "Failed to get a response from the AI assistant.",
+        description: "Failed to get a response from the AI assistant. Please check your API key.",
         variant: "destructive",
       });
+      
+      // Add error message to the chat
+      setMessages((prev) => [...prev, {
+        id: Date.now().toString(),
+        content: "I'm sorry, I encountered an error. Please check your API key or try again later.",
+        role: "assistant",
+        timestamp: new Date(),
+      }]);
     } finally {
       setIsLoading(false);
     }

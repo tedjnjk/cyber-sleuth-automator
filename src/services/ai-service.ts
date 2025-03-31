@@ -13,17 +13,23 @@ export const sendMessageToAI = async (
   apiKey?: string
 ): Promise<Message> => {
   try {
+    if (!apiKey) {
+      throw new Error("API key is required");
+    }
+
     // Format messages for the API
     const formattedMessages = messages.map((msg) => ({
       role: msg.role,
       content: msg.content,
     }));
 
+    console.log("Sending message to AI assistant...");
+
     // Call the Supabase Edge Function
     const { data, error } = await supabase.functions.invoke("ai-chat", {
       body: { 
         messages: formattedMessages,
-        apiKey
+        apiKey: apiKey
       },
     });
 
@@ -42,6 +48,7 @@ export const sendMessageToAI = async (
     return data as Message;
   } catch (error) {
     console.error("Error in sendMessageToAI:", error);
+    
     // Return a fallback message in case of error
     return {
       id: Date.now().toString(),
