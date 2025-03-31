@@ -13,6 +13,7 @@ export interface PhishingCampaign {
   status?: string;
   created_at?: string;
   updated_at?: string;
+  user_id?: string; // Add user_id field to match Supabase table requirements
 }
 
 export interface PhishingResult {
@@ -26,9 +27,19 @@ export interface PhishingResult {
 }
 
 export const createPhishingCampaign = async (campaign: PhishingCampaign) => {
+  // Get current user ID
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Create a new object with all campaign properties plus the user_id
+  const campaignWithUserId = {
+    ...campaign,
+    user_id: user?.id // Add the user's ID from the auth context
+  };
+
+  // Insert the campaign with the user_id included
   const { data, error } = await supabase
     .from('phishing_campaigns')
-    .insert(campaign)
+    .insert(campaignWithUserId)
     .select()
     .single();
 
