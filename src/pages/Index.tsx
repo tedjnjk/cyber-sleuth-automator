@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,8 +10,12 @@ import WorkflowSection from "@/components/WorkflowSection";
 import Footer from "@/components/Footer";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Link } from "react-router-dom";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, X } from "lucide-react";
 
 const Index = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <header className="container mx-auto py-4 flex justify-between items-center">
@@ -37,13 +41,34 @@ const Index = () => {
         </nav>
         <div className="md:hidden flex items-center gap-2">
           <ThemeToggle />
-          <Button className="md:hidden" variant="outline">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="4" x2="20" y1="12" y2="12" />
-              <line x1="4" x2="20" y1="6" y2="6" />
-              <line x1="4" x2="20" y1="18" y2="18" />
-            </svg>
-          </Button>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="p-2">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+              <div className="flex flex-col h-full">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="font-bold">Menu</span>
+                  <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+                <nav className="flex flex-col space-y-4">
+                  <a href="#features" className="py-2 hover:text-emerald-400 transition-colors" onClick={() => setMobileMenuOpen(false)}>Features</a>
+                  <a href="#technology" className="py-2 hover:text-emerald-400 transition-colors" onClick={() => setMobileMenuOpen(false)}>Technology</a>
+                  <a href="#workflow" className="py-2 hover:text-emerald-400 transition-colors" onClick={() => setMobileMenuOpen(false)}>Workflow</a>
+                  <a href="#security" className="py-2 hover:text-emerald-400 transition-colors" onClick={() => setMobileMenuOpen(false)}>Security</a>
+                </nav>
+                <div className="mt-auto pt-6">
+                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-black">Get Started</Button>
+                  </Link>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
@@ -134,9 +159,9 @@ const Index = () => {
               <p className="text-zinc-600 dark:text-zinc-400 mb-8">Deploy Hacker Mind AI and transform your vulnerability management with AI-driven penetration testing.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/auth">
-                  <Button className="bg-emerald-500 hover:bg-emerald-600 text-black">Request a Demo</Button>
+                  <Button className="bg-emerald-500 hover:bg-emerald-600 text-black w-full sm:w-auto">Request a Demo</Button>
                 </Link>
-                <Button variant="outline" className="border-emerald-500 text-emerald-500 hover:bg-emerald-950 dark:hover:bg-emerald-950">View Documentation</Button>
+                <Button variant="outline" className="border-emerald-500 text-emerald-500 hover:bg-emerald-950 dark:hover:bg-emerald-950 w-full sm:w-auto">View Documentation</Button>
               </div>
             </div>
           </div>

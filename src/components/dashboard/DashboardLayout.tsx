@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
+import { useMobile } from "@/hooks/use-mobile";
 
 interface DashboardLayoutProps {
   user: User;
@@ -13,9 +14,15 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ user, children }: DashboardLayoutProps) => {
-  const [open, setOpen] = useState(true);
+  const isMobile = useMobile();
+  const [open, setOpen] = useState(!isMobile);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Update sidebar state when screen size changes
+  useEffect(() => {
+    setOpen(!isMobile);
+  }, [isMobile]);
   
   // Get the current page title
   const getPageTitle = () => {

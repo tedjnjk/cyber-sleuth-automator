@@ -53,14 +53,14 @@ const Settings = () => {
           <p className="text-muted-foreground">Manage your account settings and preferences</p>
         </div>
         
-        <Tabs defaultValue="profile">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="api">API Keys</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="profile" className="mt-6 space-y-6">
+          <TabsContent value="profile" className="mt-4 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Profile Information</CardTitle>
@@ -70,13 +70,13 @@ const Settings = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-                  <Avatar className="h-20 w-20">
+                  <Avatar className="h-16 w-16 sm:h-20 sm:w-20 mx-auto sm:mx-0">
                     <AvatarImage src="" />
-                    <AvatarFallback className="text-2xl bg-emerald-500 text-black">
+                    <AvatarFallback className="text-xl sm:text-2xl bg-emerald-500 text-black">
                       {user?.email ? user.email[0].toUpperCase() : 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="space-y-2">
+                  <div className="space-y-2 text-center sm:text-left">
                     <h3 className="font-medium">{fullName || user?.email || 'User'}</h3>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
                     <Button variant="outline" size="sm">Change Avatar</Button>
@@ -85,7 +85,7 @@ const Settings = () => {
                 
                 <Separator />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="full-name">Full Name</Label>
                     <Input 
@@ -116,10 +116,11 @@ const Settings = () => {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex flex-col sm:flex-row gap-2">
                 <Button 
                   onClick={handleSaveProfile}
                   disabled={loading}
+                  className="w-full sm:w-auto"
                 >
                   {loading ? "Saving..." : "Save Changes"}
                 </Button>
@@ -165,7 +166,7 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="security" className="mt-6 space-y-6">
+          <TabsContent value="security" className="mt-4 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Security Settings</CardTitle>
@@ -186,22 +187,22 @@ const Settings = () => {
                   <Label htmlFor="confirm-password">Confirm New Password</Label>
                   <Input id="confirm-password" type="password" />
                 </div>
-                <Button className="mt-2">Change Password</Button>
+                <Button className="mt-2 w-full sm:w-auto">Change Password</Button>
                 
                 <Separator className="my-4" />
                 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="space-y-0.5">
                     <h3 className="font-medium">Two-Factor Authentication</h3>
                     <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
                   </div>
-                  <Button variant="outline">Set Up 2FA</Button>
+                  <Button variant="outline" className="w-full sm:w-auto">Set Up 2FA</Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="api" className="mt-6">
+          <TabsContent value="api" className="mt-4">
             <Card>
               <CardHeader>
                 <CardTitle>API Keys</CardTitle>
@@ -216,8 +217,8 @@ const Settings = () => {
                     <p className="text-sm text-muted-foreground">Last used 2 days ago</p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" size="sm">Show Key</Button>
-                    <Button variant="outline" size="sm" className="text-red-500">Revoke</Button>
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">Show Key</Button>
+                    <Button variant="outline" size="sm" className="text-red-500 w-full sm:w-auto">Revoke</Button>
                   </div>
                 </div>
                 
@@ -227,12 +228,12 @@ const Settings = () => {
                     <p className="text-sm text-muted-foreground">Last used 5 days ago</p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" size="sm">Show Key</Button>
-                    <Button variant="outline" size="sm" className="text-red-500">Revoke</Button>
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">Show Key</Button>
+                    <Button variant="outline" size="sm" className="text-red-500 w-full sm:w-auto">Revoke</Button>
                   </div>
                 </div>
                 
-                <Button>Generate New API Key</Button>
+                <Button className="w-full sm:w-auto">Generate New API Key</Button>
               </CardContent>
             </Card>
           </TabsContent>
